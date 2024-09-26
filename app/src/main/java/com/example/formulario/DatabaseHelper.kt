@@ -43,4 +43,26 @@ class DatabaseHelper(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME
         }
         return db.insert(TABLE_NAME, null, contentValues)
     }
+
+    fun getAllData(): List<Map<String, String>> {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM $TABLE_NAME", null)
+        val dataList = mutableListOf<Map<String, String>>()
+
+        if (cursor.moveToFirst()) {
+            do {
+                val data = mapOf(
+                    COLUMN_NAME to cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME)),
+                    COLUMN_EMAIL to cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_EMAIL)),
+                    COLUMN_COMMENT to cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_COMMENT)),
+                    COLUMN_PHOTO_PATH to cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PHOTO_PATH))
+                )
+                dataList.add(data)
+            } while (cursor.moveToNext())
+        }
+        cursor.close()
+        return dataList
+    }
+
 }
+

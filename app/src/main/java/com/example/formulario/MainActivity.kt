@@ -82,20 +82,16 @@ fun RegisterApp(fusedLocationClient: FusedLocationProviderClient) {
     var nameField by remember { mutableStateOf("") }
     var commentField by remember { mutableStateOf("") }
     var locationText by remember { mutableStateOf("") }
+    var capturedImageUri by remember { mutableStateOf<Uri>(Uri.EMPTY) }
+    var savedData by remember { mutableStateOf<List<Map<String, String>>>(emptyList()) }
 
     val context = LocalContext.current
     val activity = (context as? MainActivity) ?: return
     val file = activity.createImageFile()
+    val dbHelper = DatabaseHelper(context)
 
     val fileProviderAuthority = "com.example.formulario.provider"
-
-    val uri = FileProvider.getUriForFile(
-        context,
-        fileProviderAuthority,
-        file
-    )
-
-    var capturedImageUri by remember { mutableStateOf<Uri>(Uri.EMPTY) }
+    val uri = FileProvider.getUriForFile(context, fileProviderAuthority, file)
 
     val cameraLauncher = rememberLauncherForActivityResult(TakePicture()) {
         if (it) {
@@ -192,7 +188,6 @@ fun RegisterApp(fusedLocationClient: FusedLocationProviderClient) {
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        val dbHelper = DatabaseHelper(context)
 
         Button(
             onClick = {
@@ -204,10 +199,8 @@ fun RegisterApp(fusedLocationClient: FusedLocationProviderClient) {
                 val result = dbHelper.insertData(name, email, comment, photoPath)
 
                 if (result != -1L) {
-                    Log.d("DatabaseInsert", "Data inserted successfully: Name=$name, Email=$email, Comment=$comment, PhotoPath=$photoPath")
                     Toast.makeText(context, "Data Saved Successfully", Toast.LENGTH_SHORT).show()
                 } else {
-                    Log.e("DatabaseInsert", "Failed to insert data: Name=$name, Email=$email, Comment=$comment, PhotoPath=$photoPath")
                     Toast.makeText(context, "Failed to Save Data", Toast.LENGTH_SHORT).show()
                 }
             },
@@ -215,8 +208,32 @@ fun RegisterApp(fusedLocationClient: FusedLocationProviderClient) {
         ) {
             Text("Register")
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = {
+            savedData = dbHelper.getAllData()
+        }) {
+            Text("Show Data")
+        }
+
+        savedData.forEach { data ->
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(text = "Name: ${data[DatabaseHelper.COLUMN_NAME]}")
+                Text(text = "Email: ${data[DatabaseHelper.COLUMN_EMAIL]}")
+                Text(text = "Comment: ${data[DatabaseHelper.COLUMN_COMMENT]}")
+                Text(text = "Photo: ${data[DatabaseHelper.COLUMN_PHOTO_PATH]}")
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+        }
     }
 }
+
 
 
 
